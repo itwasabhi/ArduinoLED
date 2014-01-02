@@ -51,7 +51,7 @@ def arduino_soundlight(dev):
     divs = 15   #Defintion of wave form. Higher number = more definition
     alpha = 0.5 #Exponential Average, Levels Change Rate
     beta = 0.75 #Exponential Average, 'Value' Change Rate
-    hueThresh = 0.7e13 #Difference needed in Low frequency value to count as a beat
+    hueThresh = 0.5e13 #Difference needed in Low frequency value to count as a beat
     hueJump = 0.2 #Amount of colors to "skip" when beat detected
     colorWrap = 35 #Approximately the time (s) to come back to the same color - assuming no Beats
     
@@ -81,14 +81,6 @@ def arduino_soundlight(dev):
             # Do FFT
             levels = calculate_levels(data, chunk, samplerate, divs)
             
-            #Obtain value for 'Value' from levls
-            avg_lvls = sum(levels)/len(levels)
-            if(avg_lvls>max_lvls):
-                max_lvls = avg_lvls
-            temp_v = avg_lvls*(1.0/max_lvls)
-            if (temp_v<0):
-                temp_v=0
-            v = temp_v*beta+v*(1-beta)
             
             #Process and filter levels to obtain modified waveform
             idx=0
@@ -110,10 +102,26 @@ def arduino_soundlight(dev):
             t2 = datetime.now()
             delta = t2-t1
             Hue_Fraction = (delta.microseconds/1e6)/colorWrap
-
+            
+            #Obtain value for 'Value' from levls
+            avg_lvls = sum(levels)/len(levels)
+            if(avg_lvls>max_lvls):
+                max_lvls = avg_lvls
+            temp_v = avg_lvls*(1.0/max_lvls)
+            if (temp_v<0):
+                temp_v=0
+            v = temp_v*beta+v*(1-beta)
+            
+            v=v**2
+            if (v>1):
+                v=1
+            elif (v<0.2):
+                v=0.2
             h = h+Hue_Fraction
             if(h>1):
                 h=0
+                
+                
             ArduinoLED.HSVtoSerial((h,s,v**2))    #Convert RGB to string for Arduino
             
             #Post Processing Steps
@@ -172,7 +180,5 @@ def SelectAudio():
     return raw_input("Select Audio Device:")
         
 if __name__ == '__main__':
-    #dev = int(SelectAudio())
-
-    dev=2 #Soundflower 2ch
+    dev = int(SelectAudio())
     arduino_soundlight(dev)
