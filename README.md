@@ -17,3 +17,6 @@ Contains many parameters to modify the performance of the music-processing withi
 2) Meld
 
 Slowly loop through colors. 
+
+
+*Note the Arduino pins being used are 9,10, and 11. Other pins can be used provided they are PWM pins. 
